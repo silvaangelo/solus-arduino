@@ -1,6 +1,6 @@
 #include "DHT.h"
 #include <Thermistor.h>
- 
+
 #define DHTPIN    A0 // DHT11 conectado na porta A0 - Analógica
 #define THRMPIN   1  // Thermistor conectado na porta A1 - Analógica
 #define LDRPIN    2  // LDR conectado na porta A2 - analógica
@@ -8,11 +8,11 @@
 #define UVS       A4 // Sensor de raios UV - Analógica
 #define PLCSOLAR  A5 // Placa Solar - Analógica
 
-#define INTERVALO_LEITURA 60 // Definição do tempo de leitura do dados, em segundos
+#define READ_INTERVAL 60 // Definição do tempo de leitura do dados, em segundos
 
 #define DHTTYPE DHT11 // Definição do tipo de dado para o sensor DHT 11
 
-#define ID_EM "5bc68059751bf000e357a249" // Id da estação metereológica
+#define STATION_ID "5bc68059751bf000e357a249" // Id da estação metereológica
 
 // Leitor de Humidade e temperatura
 DHT dht(DHTPIN, DHTTYPE);
@@ -34,14 +34,14 @@ void transferDataToNodeMCU(
 ) {
     String aux;
 
-    String strEnv = "{\"arduinoId\": \"" + String(arduinoId)        + "\", ";
-    strEnv += "\"humidity\":"            + String(humidity)     + ", ";
-    strEnv += "\"temperatureHumidity\":" + String(temperatureHumidity) + ", ";
-    strEnv += "\"ambienceTemperature\":" + String(ambienceTemperature) + ", ";
-    strEnv += "\"lightIntensity\":"      + String(lightIntensity)  + ", ";
-    strEnv += "\"rainfall\":"            + String(rainfall)         + ", ";
-    strEnv += "\"uvRay\":"               + String(uvRay)         + ", ";
-    strEnv += "\"sunCapability\":"       + String(sunCapability)     + "}";
+    String jsonData = "{\"arduinoId\": \"" + String(arduinoId)           + "\", ";
+    jsonData += "\"humidity\":"            + String(humidity)            + ", ";
+    jsonData += "\"temperatureHumidity\":" + String(temperatureHumidity) + ", ";
+    jsonData += "\"ambienceTemperature\":" + String(ambienceTemperature) + ", ";
+    jsonData += "\"lightIntensity\":"      + String(lightIntensity)      + ", ";
+    jsonData += "\"rainfall\":"            + String(rainfall)            + ", ";
+    jsonData += "\"uvRay\":"               + String(uvRay)               + ", ";
+    jsonData += "\"sunCapability\":"       + String(sunCapability)       + "}";
 
     // Limpa a sujeira da serial
     if (Serial.available() > 0) {
@@ -49,10 +49,10 @@ void transferDataToNodeMCU(
     }
 
     // Transmite a string pela serial
-    Serial.println(strEnv);
+    Serial.println(jsonData);
 
     // Espera o Buffer ser esvaziado
-    delay(INTERVALO_LEITURA / 2*1000);
+    delay(READ_INTERVAL / 2*1000);
 
     // Espera e Lê a confirmação de leitura
     while (Serial.available() < 0);
@@ -72,7 +72,6 @@ void setup()
 
     // Define os pinos do sensor de chuva como entrada
     pinMode(RAINPIN_A, INPUT);
-
 
     // Define os pino do sensor de UV
     pinMode(UVS, INPUT);
@@ -110,7 +109,7 @@ void loop()
 
     // Formata e transfere os dados para o NodeMCU via Serial
     transferDataToNodeMCU(
-        ID_EM,
+        STATION_ID,
         humidity,
         temperatureHumidity,
         ambienceTemperature,
@@ -120,5 +119,5 @@ void loop()
         sunCapability
     );
 
-    delay(INTERVALO_LEITURA / 2*1000);
+    delay(READ_INTERVAL / 2*1000);
 }
