@@ -22,39 +22,39 @@ Thermistor temp(1);
 
 // Formata em Json e transfere os dados pela serial
 // Não foi utilizada a biblioteca de Json para economizar a utilização de memória
-void transfereDadosNodeMCU(
-  String id_sensor,
-  float umidadeDHT11,
-  float temperaturaDHT11,
-  float temperaturaTherm,
-  int luminosidadeLDR,
-  float val_rain,
-  int valor_UV,
-  float valor_PLCSOL
+void transferDataToNodeMCU(
+  String arduinoId,
+  float humidity,
+  float temperatureHumidity,
+  float ambienceTemperature,
+  int lightIntensity,
+  float rainfall,
+  int uvRay,
+  float sunCapability
 ) {
     String aux;
 
-    String strEnv = "{\"arduinoId\": \"" + String(id_sensor) + "\", ";
-    strEnv += "\"airMoisture\":" + String(umidadeDHT11) + ", ";
-    strEnv += "\"temperature\":" + String(temperaturaDHT11) + ", ";
-    strEnv += "\"arduinoTemperature\":" + String(temperaturaTherm) + ", ";
-    strEnv += "\"sunlight\":" + String(luminosidadeLDR) + ", ";
-    strEnv += "\"rainfall\":" + String(val_rain) + ", ";
-    strEnv += "\"uvRay\":" + String(valor_UV) + ", ";
-    strEnv += "\"sunCapability\":" + String(valor_PLCSOL) + "}";
+    String strEnv = "{\"arduinoId\": \"" + String(arduinoId)        + "\", ";
+    strEnv += "\"humidity\":"            + String(humidity)     + ", ";
+    strEnv += "\"temperatureHumidity\":" + String(temperatureHumidity) + ", ";
+    strEnv += "\"ambienceTemperature\":" + String(ambienceTemperature) + ", ";
+    strEnv += "\"lightIntensity\":"      + String(lightIntensity)  + ", ";
+    strEnv += "\"rainfall\":"            + String(rainfall)         + ", ";
+    strEnv += "\"uvRay\":"               + String(uvRay)         + ", ";
+    strEnv += "\"sunCapability\":"       + String(sunCapability)     + "}";
 
     // Limpa a sujeira da serial
     if (Serial.available() > 0) {
         aux = Serial.readString();
     }
 
-    //Transmite a string pela serial
+    // Transmite a string pela serial
     Serial.println(strEnv);
 
     // Espera o Buffer ser esvaziado
     delay(INTERVALO_LEITURA / 2*1000);
 
-    //Espera e Lê a confirmação de leitura
+    // Espera e Lê a confirmação de leitura
     while (Serial.available() < 0);
     aux = Serial.readString();
 }
@@ -84,40 +84,40 @@ void setup()
 void loop() 
 {
     // Leitura do DHT11 - Humidade e Temperatura - Valores: Humidade em % e Temperatura em Graus Celsius
-    float umidadeDHT11 = dht.readHumidity();
-    float temperaturaDHT11 = dht.readTemperature();
+    float humidity = dht.readHumidity();
+    float temperatureHumidity = dht.readTemperature();
     // Final da leitura do DHT11
 
     // Leituda da Segunda temperatura - Thermistor - Temperatura em Graus Celsius
-    float temperaturaTherm = temp.getTemp();
+    float ambienceTemperature = temp.getTemp();
     // Final Leitura do Thermistor
 
     // Leitura da luminosidade - LDR - Intensidade - 0 (Muita Luminosidade) - 1024 (Sem Luminosidade)
-    int luminosidadeLDR = analogRead(LDRPIN);
+    int lightIntensity = analogRead(LDRPIN);
     // Final Leitura de Luminosidade
 
     // Leitura do sensor de chuva - Valor Digital - 0 (chuva) ou 1 (sem chuva) - analógivo a intensidade da chuva (0 (Chuva Forte) - 1024 (Sem chuva))
-    int val_rain = analogRead(RAINPIN_A);//* (5.0 / 1023.0);
+    int rainfall = analogRead(RAINPIN_A);//* (5.0 / 1023.0);
     // Final da leitura do sensor de chuva
 
     // Leitura do Sensor UV
-    int valor_UV = analogRead(UVS);
+    int uvRay = analogRead(UVS);
     // Final da leitura do Sensor UV
 
     // Leitura do Sensor de humidadde do Solo
-    float valor_PLCSOL = analogRead(PLCSOLAR) * (5.0 / 1023.0);
+    float sunCapability = analogRead(PLCSOLAR) * (5.0 / 1023.0);
     // Final da leitura do Sensor humidadde do Solo
 
     // Formata e transfere os dados para o NodeMCU via Serial
-    transfereDadosNodeMCU(
+    transferDataToNodeMCU(
         ID_EM,
-        umidadeDHT11,
-        temperaturaDHT11,
-        temperaturaTherm,
-        luminosidadeLDR,
-        val_rain,
-        valor_UV,
-        valor_PLCSOL
+        humidity,
+        temperatureHumidity,
+        ambienceTemperature,
+        lightIntensity,
+        rainfall,
+        uvRay,
+        sunCapability
     );
 
     delay(INTERVALO_LEITURA / 2*1000);
