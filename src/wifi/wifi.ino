@@ -1,23 +1,20 @@
 #include "ESP8266WiFi.h"
 
-#define READ_INTERVAL 30
+#define TEMPO_LEITURA 30 // Definição do tempo de leitura do dados, em segundos
 
-const char* WIFI_SSID     = "teste-em";
-const char* WIFI_PASSWORD = "teste-em*2018";
+const char* ssid     = "wifiangelo";
+const char* password = "123aa4a5";
 
-const char* API_HOST             = "200.133.218.86";
-const int   API_PORT             = 8081;
-const char* API_MEASURE_ROUTER   = "/ic/public_html/WSEstMet/em.php";
+const char* HOST  = "206.189.181.208";
+const int   PORTA = 3000;
+const char* API   =  "/api/measure";
 
 int wifiStatus;
 
-// Função para chamada de Webservice REST via POST
-String callApi(String host, int porta, String api, String postData) {
-    String response;
+String chamaWebservice(String host, int porta, String api, String postData) {
+    String retorno;
 
-    wifiStatus = WiFi.status();
-
-    if (wifiStatus == WL_CONNECTED) {
+    if(WiFi.status() == WL_CONNECTED) {
         WiFiClient client;
 
         if (client.connect(host, porta)) {
@@ -34,66 +31,65 @@ String callApi(String host, int porta, String api, String postData) {
             client.println();
 
             while (client.available() || client.connected()) {
-                response += client.readStringUntil('\r');
+                retorno += client.readStringUntil('\r');
             }
 
             client.stop();
         }
     }
 
-    return response;
+    return retorno;
 }
 
-// Função para receber os dados do ARDUINO via Serial
-String receiveArduino() {
+String recebeArduino() {
     String json;
 
-    // Enquanto receber algo pela serial, verifica se há dados na serial
+    // Verifica se há dados na serial
     if (Serial.available() > 0) {
         // Lê String da serial
         json = Serial.readString();
 
         // Espera o Buffer Serial ser esvaziado
-        delay(READ_INTERVAL / 2*1000);
+        delay(TEMPO_LEITURA / 2*1000);
 
         //Retorna para o Arduino que a serial está livre
-        Serial.println("Json: " + json);
-        Serial.println("\n");
+        Serial.println("Json:" + json);
     }
 
     return json;
 }
 
-// Função para configuração dos módulos Serial e WIFI do nodeMCU
 void setup() {
     Serial.begin(115200);
+
     delay(5000);
 
     // Iniciar ligação à rede
-    WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+    WiFi.begin(ssid, password);
 
     while (WiFi.status() != WL_CONNECTED) {
         delay(500);
-        Serial.print("Waiting for wifi connection...\n");
+        Serial.print(".");
     }
 
-    Serial.println("Wifi connected\n");
+    Serial.println("Wifi connected.\n");
 
     // Espera o arduino subir e começar a ler.
     delay(10000);
 }
 
-// Loop principal do nodeMCU
 void loop() {
     // Lê dados da Serial, vindo do arduíno
-    String valores = receiveArduino();
+    String valores = recebeArduino(); 
 
     // Se há valores recebidos
-    if (valores != NULL) {
-        // Chama o WebService para tratar os dados
-        String ret = callApi(API_HOST, API_PORT, API_MEASURE_ROUTER, valores);
+    if (valores != NULL ) {
+
+    // Chama o WebService para tratar os dados
+    String ret = chamaWebservice(HOST, PORTA, API, valores);
+
     }
 
     // Tempo de espera para a próxima leitura
-    delay(READ_INTERVAL / 2*1000);
+    delay(TEMPO_LEITURA / 2*1000);
 }
